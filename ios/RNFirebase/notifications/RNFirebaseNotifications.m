@@ -222,7 +222,7 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
          withCompletionHandler:(void(^)())completionHandler NS_AVAILABLE_IOS(10_0) {
 #endif
      NSDictionary *message = [self parseUNNotificationResponse:response];
-           
+
      NSString *handlerKey = message[@"notification"][@"notificationId"];
 
      [self sendJSEvent:self name:NOTIFICATIONS_NOTIFICATION_OPENED body:message];
@@ -415,7 +415,12 @@ RCT_EXPORT_METHOD(jsInitialised:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
 // Because of the time delay between the app starting and the bridge being initialised
 // we create a temporary instance of RNFirebaseNotifications.
 // With this temporary instance, we cache any events to be sent as soon as the bridge is set on the module
+static RCTEventEmitter *storedEmitter = nil;
 - (void)sendJSEvent:(RCTEventEmitter *)emitter name:(NSString *)name body:(id)body {
+    if (!storedEmitter && emitter.bridge) {
+        storedEmitter = emitter;
+    }
+    emitter = storedEmitter;
     if (emitter.bridge && jsReady) {
         [RNFirebaseUtil sendJSEvent:emitter name:name body:body];
     } else {

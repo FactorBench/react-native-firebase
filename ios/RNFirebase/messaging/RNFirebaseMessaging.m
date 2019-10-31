@@ -258,7 +258,12 @@ RCT_EXPORT_METHOD(jsInitialised:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
 
 // Because of the time delay between the app starting and the bridge being initialised
 // we catch any events that are received before the JS is ready to receive them
+static RCTEventEmitter *storedEmitter = nil;
 - (void)sendJSEvent:(RCTEventEmitter *)emitter name:(NSString *)name body:(id)body {
+    if (!storedEmitter && emitter.bridge) {
+        storedEmitter = emitter;
+    }
+    emitter = storedEmitter;
     if (emitter.bridge && jsReady) {
         [RNFirebaseUtil sendJSEvent:emitter name:name body:body];
     } else {
@@ -341,4 +346,3 @@ RCT_EXPORT_METHOD(jsInitialised:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
 @implementation RNFirebaseMessaging
 @end
 #endif
-

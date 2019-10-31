@@ -70,7 +70,7 @@ restorationHandler:
                         [self sendJSEvent:self name:LINKS_LINK_RECEIVED body:url.absoluteString];
                     } else if (error != nil && [NSPOSIXErrorDomain isEqualToString:error.domain] && error.code == 53) {
                         DLog(@"Failed to handle universal link on first attempt, retrying: %@", userActivity.webpageURL);
-                        
+
                         // Per Apple Tech Support, this could occur when returning from background on iOS 12.
                         // https://github.com/AFNetworking/AFNetworking/issues/4279#issuecomment-447108981
                         // Retry the request once
@@ -105,7 +105,7 @@ RCT_EXPORT_METHOD(createDynamicLink:(NSDictionary *)linkData
                   rejecter:(RCTPromiseRejectBlock)reject) {
     @try {
         FIRDynamicLinkComponents *dynamicLink = [self buildDynamicLink:linkData];
-        
+
         if (dynamicLink == nil) {
             reject(@"links/failure", @"Failed to create Dynamic Link", nil);
         } else {
@@ -189,7 +189,12 @@ RCT_EXPORT_METHOD(jsInitialised:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
 
 // Because of the time delay between the app starting and the bridge being initialised
 // we catch any events that are received before the JS is ready to receive them
+static RCTEventEmitter *storedEmitter = nil;
 - (void)sendJSEvent:(RCTEventEmitter *)emitter name:(NSString *)name body:(id)body {
+    if (!storedEmitter && emitter.bridge) {
+        storedEmitter = emitter;
+    }
+    emitter = storedEmitter;
     if (emitter.bridge && jsReady) {
         [RNFirebaseUtil sendJSEvent:emitter name:name body:body];
     } else if (!initialLink) {
@@ -203,14 +208,14 @@ RCT_EXPORT_METHOD(jsInitialised:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
     @try {
         NSURL *link = [NSURL URLWithString:linkData[@"link"]];
         FIRDynamicLinkComponents *components = [FIRDynamicLinkComponents componentsWithLink:link domainURIPrefix:linkData[@"domainURIPrefix"]];
-        
+
         [self setAnalyticsParameters:linkData[@"analytics"] components:components];
         [self setAndroidParameters:linkData[@"android"] components:components];
         [self setIosParameters:linkData[@"ios"] components:components];
         [self setITunesParameters:linkData[@"itunes"] components:components];
         [self setNavigationParameters:linkData[@"navigation"] components:components];
         [self setSocialParameters:linkData[@"social"] components:components];
-        
+
         return components;
     }
     @catch(NSException * e) {
@@ -222,7 +227,7 @@ RCT_EXPORT_METHOD(jsInitialised:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
 - (void)setAnalyticsParameters:(NSDictionary *)analyticsData
                     components:(FIRDynamicLinkComponents *)components {
     FIRDynamicLinkGoogleAnalyticsParameters *analyticsParams = [FIRDynamicLinkGoogleAnalyticsParameters parameters];
-    
+
     if (analyticsData[@"campaign"]) {
         analyticsParams.campaign = analyticsData[@"campaign"];
     }
@@ -245,7 +250,7 @@ RCT_EXPORT_METHOD(jsInitialised:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
                   components:(FIRDynamicLinkComponents *)components {
     if (androidData[@"packageName"]) {
         FIRDynamicLinkAndroidParameters *androidParams = [FIRDynamicLinkAndroidParameters parametersWithPackageName: androidData[@"packageName"]];
-        
+
         if (androidData[@"fallbackUrl"]) {
             androidParams.fallbackURL = [NSURL URLWithString:androidData[@"fallbackUrl"]];
         }
