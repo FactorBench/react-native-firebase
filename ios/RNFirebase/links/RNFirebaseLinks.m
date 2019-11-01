@@ -191,7 +191,8 @@ RCT_EXPORT_METHOD(jsInitialised:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
 // we catch any events that are received before the JS is ready to receive them
 static RCTEventEmitter *storedEmitter = nil;
 - (void)sendJSEvent:(RCTEventEmitter *)emitter name:(NSString *)name body:(id)body {
-    if (!storedEmitter && emitter.bridge) {
+    if ((!storedEmitter || !storedEmitter.bridge || !storedEmitter.bridge.valid)
+        && emitter.bridge && emitter.bridge.valid) {
         storedEmitter = emitter;
     }
     emitter = storedEmitter;

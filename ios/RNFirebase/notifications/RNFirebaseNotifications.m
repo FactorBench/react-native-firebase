@@ -417,7 +417,8 @@ RCT_EXPORT_METHOD(jsInitialised:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
 // With this temporary instance, we cache any events to be sent as soon as the bridge is set on the module
 static RCTEventEmitter *storedEmitter = nil;
 - (void)sendJSEvent:(RCTEventEmitter *)emitter name:(NSString *)name body:(id)body {
-    if (!storedEmitter && emitter.bridge) {
+    if ((!storedEmitter || !storedEmitter.bridge || !storedEmitter.bridge.valid)
+        && emitter.bridge && emitter.bridge.valid) {
         storedEmitter = emitter;
     }
     emitter = storedEmitter;
